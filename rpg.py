@@ -98,14 +98,14 @@ def showFightStatus():
     print('Health: {}, Mana: {}'.format(health, mana))
     if 'monsters' in rooms[currentRoom]:
         for monster in rooms[currentRoom]['monsters']:
-            print ('A {} will fight against you'.format(monster))
+            print ('A {} will fight against you(HP{})'.format(monster, monsters[monster]['health']))
+
 
 
 
 def fight():
-    showFightStatus()
-
     while True:
+        showFightStatus()
         move = get_user_input()
 
         if move[0] == 'flee':
@@ -115,6 +115,22 @@ def fight():
                 break
             else:
                 print('Your try to escape failed.')
+
+        if move [0] == 'attack':
+            if move[1] in monsters and move[1] in rooms[currentRoom]['monsters']:
+                monsters[move[1]]['health'] -= 10
+
+        for monster in rooms [currentRoom]['monsters']:
+            if monsters [monster]['health']<=0:
+                print('The {} is defeated.'.format(monster))
+                del monsters[monster]
+                rooms[currentRoom]['monsters'].remove(monster)
+
+
+
+
+
+
 
 
 
