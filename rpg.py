@@ -63,12 +63,12 @@ monsters = {
     'green_slime':
         {
             'health': 20,
-            'attack': 10,
+            'attack': 5,
         },
     'frog':
         {
             'health': 15,
-            'attack': 10,
+            'attack': 3,
         }
 }
 
@@ -104,6 +104,8 @@ def showFightStatus():
 
 
 def fight():
+    global health
+
     while True:
         showFightStatus()
         move = get_user_input()
@@ -117,7 +119,6 @@ def fight():
                 print('Your try to escape failed.')
 
         if move [0] == 'attack':
-
             if move[1] in monsters and move[1] in rooms[currentRoom]['monsters']:
                 if random() > 0.2:
                     print('The attack was successful')
@@ -128,30 +129,42 @@ def fight():
                 else:
                     print('The monster dodged your attack...')
 
-        for monster in rooms [currentRoom]['monsters']:
-            if monsters [monster]['health']<=0:
+        for monster in rooms[currentRoom]['monsters']:
+            if monsters[monster]['health']<=0:
                 print('The {} is defeated.'.format(monster))
                 del monsters[monster]
                 rooms[currentRoom]['monsters'].remove(monster)
 
+        #leave the fight mode if no monsters left
+        if len(rooms[currentRoom]['monsters']) == 0:
+            del rooms[currentRoom]['monsters']
+            return
 
-
-
-
-
-
+        for monster in rooms[currentRoom]['monsters']:
+            if random() > 0.3:
+                print('The {} hits you!'.format(monster))
+                health -= monsters[monster]['attack']
+            elif random() > 0.9:
+                print('The {} lands a critical hit!'.format(monster))
+                health -= monsters[monster]['attack']*2
+            else:
+                print('You dodged an attack from the {}'.format(monster))
+            if health <= 0:
+                return
 
 
 
 #loop forever
 while True:
+    if health <= 0:
+        print('     -GAME OVER-     ')
+        break
+
     showStatus()
 
     if 'monsters' in rooms[currentRoom]:
         fight()
         continue
-
-
 
     move = get_user_input()
 
