@@ -117,8 +117,16 @@ def fight():
                 print('Your try to escape failed.')
 
         if move [0] == 'attack':
+
             if move[1] in monsters and move[1] in rooms[currentRoom]['monsters']:
-                monsters[move[1]]['health'] -= 10
+                if random() > 0.2:
+                    print('The attack was successful')
+                    monsters[move[1]]['health'] -= 10
+                elif random() > 0.8:
+                    print('A critical Hit!')
+                    monsters[move[1]]['health'] -= 20
+                else:
+                    print('The monster dodged your attack...')
 
         for monster in rooms [currentRoom]['monsters']:
             if monsters [monster]['health']<=0:
