@@ -74,7 +74,7 @@ monsters = {
 
 
 #start the player in the Hall
-currentRoom = 'Hall'
+currentRoom = 'Dining Room'
 
 showInstructions()
 
