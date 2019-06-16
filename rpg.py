@@ -28,15 +28,12 @@ strength = 10
 # what we have on
 equipped = None
 
-# strenght of equipment
-equipment_strength = 0
-
 # a dictionary linking a room to other rooms
 rooms = {
     'Hall': {
         'south': 'Library',
         'east': 'Wrought',
-        'item': 'sword'
+        'item': 'apple'
 
     },
     'Old Library': {
@@ -45,10 +42,25 @@ rooms = {
     },
     'Wrought': {
         'west': 'Hall',
-        'monsters': ['green_slime', 'frog'],
-        'item': 'sword'
+        'monsters': ['green_slime', 'snake'],
+        'item': 'broken sword'
     },
 }
+items = {
+    'apple':
+        {
+            'can_eat': True,
+            'can_equip': False,
+            'health': 5,
+        },
+    'broken sword':
+        {
+            'can_eat': False,
+            'can_equip': True,
+            'strength': 5
+        }
+}
+
 
 monsters = {
     'green_slime':
@@ -56,7 +68,7 @@ monsters = {
             'health': 20,
             'attack': 5,
         },
-    'frog':
+    'snake':
         {
             'health': 15,
             'attack': 3,
@@ -87,7 +99,7 @@ def showStatus():
     # print the player's current health and mana
     print('Health: {}, Mana: {}, strength: {}'.format(health, mana, strength))
     if equipped is not None:
-        print('  equipped: {} {}'.format(equipped, equipment_strength))
+        print('  equipped: {} {}'.format(equipped, items[equipped]['strength']))
     print('You are in the ' + currentRoom)
     # print the current inventory
     print('Inventory : ' + str(inventory))
@@ -162,6 +174,16 @@ def fight():
                 return
 
 
+def remove_current_equipment():
+    global strength, equipped
+    if equipped is not None:
+        print('You\'ve taken off your {}.'.format(equipped))
+        strength -= items[equipped]['strength']
+        equipment_strength = 0
+        equipped = None
+        inventory.add(target)
+
+
 # loop forever
 while True:
     if health <= 0:
@@ -203,10 +225,10 @@ while True:
 
     if command == 'eat':
         if target in inventory:
-            if target == 'apple':
-                health += 5
-                inventory.remove('apple')
-                print('You eat an Apple. 5 HP recovered.')
+            if target in items and items[target]['can_eat']:
+                health +=items[target]['health']
+                inventory.remove(target)
+                print('You eat the {}. {} HP recovered.'.format(target, items[target]['health']))
             else:
                 print('Can\'t eat {}'.format(target))
         else:
@@ -214,20 +236,17 @@ while True:
 
     if command == 'equip':
         if target in inventory:
-            if target == 'sword':
-                if equipped is not None:
-                    print('You\'ve taken off your {}.'.format(equipped))
-                    strength -= equipment_strength
-                    equipment_strength = 0
-                    equipped = None
-                    inventory.add(target)
+            if target in items and items[target]['can_equip']:
+                remove_current_equipment()
                 print('You equipped the {}.'.format(target))
-                strength += 5
+                strength += items[target]['strength']
                 inventory.remove(target)
                 equipped = target
-                equipment_strength = 5
             else:
                 print('You can\'t equip {}'.format(target))
         else:
             print('You don\'t have {}'.format(target))
+
+    if command == 'unequip':
+        remove_current_equipment()
 
