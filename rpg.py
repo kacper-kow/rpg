@@ -5,8 +5,8 @@ from random import random
 
 
 def showInstructions():
-  #print a main menu and the commands
-  print('''
+    # print a main menu and the commands
+    print('''
 RPG Game
 ========
 Commands:
@@ -14,48 +14,39 @@ Commands:
   get [item]
 ''')
 
-def showStatus():
-  #print the player's current status
-  print('---------------------------')
-  #print the player's current health and mana
-  print('Health: {}, Mana: {}'.format(health, mana))
-  print('You are in the ' + currentRoom)
-  #print the current inventory
-  print('Inventory : ' + str(inventory))
-  if 'monsters' in rooms[currentRoom]:
-      for monster in rooms[currentRoom]['monsters']:
-          print ('A {} approaches'.format(monster))
-  #print an item if there is one
-  if "item" in rooms[currentRoom]:
-    print('You see a ' + rooms[currentRoom]['item'])
-  print("---------------------------")
-
-#an inventory, which is initially empty
+# an inventory, which is initially empty
 inventory = []
 
-#health shows how much lives you have
+# health shows how much lives you have
 health = 20
 
-#mana shows how much magic power you have
+# mana shows how much magic power you have
 mana = 0
+# looks how strong you are
+strength = 10
 
+# what we have on
+equipped = None
 
+# strenght of equipment
+equipment_strength = 0
 
-#a dictionary linking a room to other rooms
+# a dictionary linking a room to other rooms
 rooms = {
-    'Hall' : {
-        'south' : 'Kitchen',
-        'east'  : 'Dining Room',
-        'item'  : 'apple'
+    'Hall': {
+        'south': 'Library',
+        'east': 'Wrought',
+        'item': 'sword'
 
     },
-    'Kitchen' : {
-        'north' : 'Hall',
+    'Old Library': {
+        'north': 'Hall',
         'item': 'key'
     },
-    'Dining Room': {
+    'Wrought': {
         'west': 'Hall',
-        'monsters': ['green_slime', 'frog']
+        'monsters': ['green_slime', 'frog'],
+        'item': 'sword'
     },
 }
 
@@ -72,9 +63,8 @@ monsters = {
         }
 }
 
-
-#start the player in the Hall
-currentRoom = 'Dining Room'
+# start the player in the Hall
+currentRoom = 'Hall'
 
 showInstructions()
 
@@ -88,9 +78,29 @@ def get_user_input():
     while userinput == '':
         userinput = input('>')
     userinput = userinput.lower()
-    return userinput.split()
+    return userinput.split()[0], ' '.join(userinput.split()[1:])
 
-#fight mode
+
+def showStatus():
+    # print the player's current status
+    print('---------------------------')
+    # print the player's current health and mana
+    print('Health: {}, Mana: {}, strength: {}'.format(health, mana, strength))
+    if equipped is not None:
+        print('  equipped: {} {}'.format(equipped, equipment_strength))
+    print('You are in the ' + currentRoom)
+    # print the current inventory
+    print('Inventory : ' + str(inventory))
+    # print an item if there is one
+    if "item" in rooms[currentRoom]:
+        print('You see a ' + rooms[currentRoom]['item'])
+    if 'monsters' in rooms[currentRoom]:
+        for monster in rooms[currentRoom]['monsters']:
+            print('A {} approaches'.format(monster))
+    print("---------------------------")
+
+
+# fight mode
 def showFightStatus():
     # print the player's current status
     print('-------FIGHT MODE--------')
@@ -98,19 +108,18 @@ def showFightStatus():
     print('Health: {}, Mana: {}'.format(health, mana))
     if 'monsters' in rooms[currentRoom]:
         for monster in rooms[currentRoom]['monsters']:
-            print ('A {} will fight against you(HP{})'.format(monster, monsters[monster]['health']))
-
-
+            print('A {} will fight against you(HP{})'.format(monster, monsters[monster]['health']))
 
 
 def fight():
     global health
+    global strength
 
     while True:
         showFightStatus()
-        move = get_user_input()
+        command, target = get_user_input()
 
-        if move[0] == 'flee':
+        if command == 'flee':
             if random() > 0.5:
                 print('You escaped safely. The monsters dissapeared.')
                 del rooms[currentRoom]['monsters']
@@ -118,24 +127,24 @@ def fight():
             else:
                 print('Your try to escape failed.')
 
-        if move [0] == 'attack':
-            if move[1] in monsters and move[1] in rooms[currentRoom]['monsters']:
+        if command == 'attack':
+            if target in monsters and target in rooms[currentRoom]['monsters']:
                 if random() > 0.2:
                     print('The attack was successful')
-                    monsters[move[1]]['health'] -= 10
+                    monsters[target]['health'] -= strength
                 elif random() > 0.8:
                     print('A critical Hit!')
-                    monsters[move[1]]['health'] -= 20
+                    monsters[target]['health'] -= strength * 2
                 else:
                     print('The monster dodged your attack...')
 
         for monster in rooms[currentRoom]['monsters']:
-            if monsters[monster]['health']<=0:
+            if monsters[monster]['health'] <= 0:
                 print('The {} is defeated.'.format(monster))
                 del monsters[monster]
                 rooms[currentRoom]['monsters'].remove(monster)
 
-        #leave the fight mode if no monsters left
+        # leave the fight mode if no monsters left
         if len(rooms[currentRoom]['monsters']) == 0:
             del rooms[currentRoom]['monsters']
             return
@@ -146,15 +155,14 @@ def fight():
                 health -= monsters[monster]['attack']
             elif random() > 0.9:
                 print('The {} lands a critical hit!'.format(monster))
-                health -= monsters[monster]['attack']*2
+                health -= monsters[monster]['attack'] * 2
             else:
                 print('You dodged an attack from the {}'.format(monster))
             if health <= 0:
                 return
 
 
-
-#loop forever
+# loop forever
 while True:
     if health <= 0:
         print('     -GAME OVER-     ')
@@ -166,41 +174,60 @@ while True:
         fight()
         continue
 
-    move = get_user_input()
+    command, target = get_user_input()
 
-    #if they type 'go' first
-    if move[0] == 'go':
-        #check that they are allowed wherever they want to go
-        if move[1] in rooms[currentRoom]:
-            #set the current room to the new room
-            currentRoom = rooms[currentRoom][move[1]]
-        #there is no door (link) to the new room
+    # if they type 'go' first
+    if command == 'go':
+        # check that they are allowed wherever they want to go
+        if target in rooms[currentRoom]:
+            # set the current room to the new room
+            currentRoom = rooms[currentRoom][target]
+        # there is no door (link) to the new room
         else:
             print('You can\'t go that way!')
 
-    #if they type 'get' first
-    if move[0] == 'get' :
-        #if the room contains an item, and the item is the one they want to get
-        if "item" in rooms[currentRoom] and move[1] in rooms[currentRoom]['item']:
-            #add the item to their inventory
-            inventory += [move[1]]
-            #display a helpful message
-            print(move[1] + ' got!')
-            #delete the item from the room
+    # if they type 'get' first
+    if command == 'get':
+        # if the room contains an item, and the item is the one they want to get
+        if "item" in rooms[currentRoom] and target in rooms[currentRoom]['item']:
+            # add the item to their inventory
+            inventory += [target]
+            # display a helpful message
+            print(target + ' got!')
+            # delete the item from the room
             del rooms[currentRoom]['item']
-    #otherwise, if the item isn't there to get
-    else:
-        #tell them they can't get it
-        print('Can\'t get ' + move[1] + '!')
+        # otherwise, if the item isn't there to get
+        else:
+            # tell them they can't get it
+            print('Can\'t get ' + target + '!')
 
-    if move[0] == 'eat':
-        if move[1] in inventory:
-            if move[1] == 'apple':
+    if command == 'eat':
+        if target in inventory:
+            if target == 'apple':
                 health += 5
                 inventory.remove('apple')
                 print('You eat an Apple. 5 HP recovered.')
             else:
-                print('Can\'t eat {}'.format(move[1]))
+                print('Can\'t eat {}'.format(target))
         else:
-            print('You don\'t have {}...'.format(move[1]))
+            print('You don\'t have {}...'.format(target))
+
+    if command == 'equip':
+        if target in inventory:
+            if target == 'sword':
+                if equipped is not None:
+                    print('You\'ve taken off your {}.'.format(equipped))
+                    strength -= equipment_strength
+                    equipment_strength = 0
+                    equipped = None
+                    inventory.add(target)
+                print('You equipped the {}.'.format(target))
+                strength += 5
+                inventory.remove(target)
+                equipped = target
+                equipment_strength = 5
+            else:
+                print('You can\'t equip {}'.format(target))
+        else:
+            print('You don\'t have {}'.format(target))
 
